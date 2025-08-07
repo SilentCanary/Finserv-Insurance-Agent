@@ -14,8 +14,8 @@ from email import policy
 from sentence_transformers import SentenceTransformer
 import faiss
 import pickle
-
-model = SentenceTransformer('./all-MiniLM-L6-v2')
+HF_API_KEY=os.getenv("HF_API_KEY")
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2',use_auth_token=HF_API_KEY)
 def chunk_text(text,chunk_size=500,chunk_overlap=100):
     splitter=RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,

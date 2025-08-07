@@ -18,9 +18,8 @@ import os
 from dotenv import load_dotenv
 
 GROQ_API_KEY = os.getenv("GROQ_KEY")
-
-
-embedder = SentenceTransformer("./all-MiniLM-L6-v2")
+HF_API_KEY=os.getenv("HF_API_KEY")
+embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2',use_auth_token=HF_API_KEY)
 cross_encoder = CrossEncoder('./local_cross_encoder', device='cpu')
 
 index = faiss.read_index("faiss_index/index.faiss")
