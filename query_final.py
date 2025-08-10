@@ -17,9 +17,11 @@ import requests
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_KEY")
-HF_API_KEY=os.getenv("HF_API_KEY")
-embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2',use_auth_token=HF_API_KEY)
+
+
+embedder = SentenceTransformer("./all-MiniLM-L6-v2")
 cross_encoder = CrossEncoder('./local_cross_encoder', device='cpu')
 
 index = faiss.read_index("faiss_index/index.faiss")
@@ -70,10 +72,13 @@ def query_pipeline(user_query, top_k=10, rerank_k=5):
     top_chunks = [chunk for chunk, _, _ in reranked[:rerank_k]]
 
     answer_prompt = f"""
-You are an expert assistant helping users understand their health insurance coverage. Use the following retrieved document snippets to answer the user's question.
+You are an expert assistant helping users understand their insurance coverage. Use the following retrieved document snippets to answer the user's question.
 
-Answer clearly and concisely in plain English. Do not return a JSON or structured output. Just provide a helpful, factual response based on the information available.
-Keep the answer concise and to the point.
+-Answer clearly and concisely in plain English like a human agent would. Do not return a JSON or structured output.
+- Keep your answer brief, formal, and factual.
+- Give only short and precise reasons. DO NOT add unnecessary long explanations and assumptions.
+- Match the tone and wording as closely as possible to official documentation.
+- Provide your answer as a single paragraph without line breaks.
 User Question: "{user_query}"
 
 Relevant Document Snippets:

@@ -4,7 +4,6 @@ pydantic
 requests
 python-multipart
 
-gradio
 langchain==0.1.14
 langchain-community==0.0.32
 langchain-core==0.1.53
@@ -15,9 +14,7 @@ langsmith==0.1.147
 
 sentence-transformers
 transformers
-torch
 faiss-cpu
 pdfplumber
 python-docx
 python-dotenv
-scikit-learn

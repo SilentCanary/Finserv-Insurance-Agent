@@ -6,17 +6,20 @@ Created on Mon Aug  4 19:21:16 2025
 """
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from huggingface_hub import login
 import os
 import pdfplumber
 import docx
 import email
 from email import policy
 from sentence_transformers import SentenceTransformer
+from sentence_transformers.util import normalize_embeddings
 import faiss
 import pickle
+
 HF_API_KEY=os.getenv("HF_API_KEY")
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2',use_auth_token=HF_API_KEY)
-def chunk_text(text,chunk_size=500,chunk_overlap=100):
+model =  SentenceTransformer("./all-MiniLM-L6-v2")
+def chunk_text(text,chunk_size=750,chunk_overlap=200):
     splitter=RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap)
@@ -54,11 +57,12 @@ def load_text(data_folder):
     return all_texts
 
 def build_faiss_index(all_chunks):
-    embeddings=model.encode(all_chunks,show_progress_bar=True)
+    embeddings=model.encode(all_chunks,show_progress_bar=True,convert_to_tensor=True)
+    embeddings = normalize_embeddings(embeddings)
     dim=embeddings[0].shape[0]
     index=faiss.IndexFlatL2(dim)
-    index.add(embeddings)
-    return index,embeddings
+    index.add(embeddings.cpu().numpy())
+    return index,embeddings.cpu().numpy()
 
 if __name__=="__main__":
     all_texts=load_text("data")

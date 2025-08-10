@@ -12,7 +12,7 @@ from typing import List
 import tempfile
 import requests
 from query_final import query_pipeline
-from utils import download_pdf_and_chunk
+from utils import download_file_and_chunk
 from dotenv import load_dotenv
 import os
 router = APIRouter()
@@ -35,14 +35,60 @@ def validate_token(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
         raise HTTPException(status_code=403, detail="Invalid or missing token")
     return credentials.credentials
 
+
+
+def get_file_extension_fron_url(url:str) ->str:
+    url=url.lower()
+    if url.endswith('.pdf'):
+        return '.pdf'
+    elif url.endswith('.docx'):
+        return '.docx'
+    elif url.endswith('.eml'):
+        return '.eml'
+       
+    else:
+        try:
+            resp=requests.head(url,timeout=3)
+            content_type=resp.headers.get('content-type','').lower()
+            if 'pdf' in content_type:
+                return '.pdf'
+            elif 'msword' in content_type or 'officedocument' in content_type:
+                return '.docx'
+            elif 'message/rfc822' in content_type or 'eml' in content_type:
+                return '.eml'
+        except Exception:
+            pass
+        return '.pdf'  #default , this will give terrible result but prevent from breaking 
+
 @router.post("/hackrx/run", response_model=QAResponse)
-def run_qa(payload: QARequest, token: str = Depends(validate_token)):
-    temp_file = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+def run_qa_post(payload: QARequest, token: str = Depends(validate_token)):
+    
+    ext=get_file_extension_fron_url(payload.documents)
+    temp_file = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
     response = requests.get(payload.documents)
     temp_file.write(response.content)
     temp_file.close()
 
-    download_pdf_and_chunk(temp_file.name)
+    download_file_and_chunk(temp_file.name)
+
+    answers = []
+    for question in payload.questions:
+        answer = query_pipeline(question)  
+        answers.append(answer)
+
+    return {"answers": answers}
+
+
+
+@router.get("/hackrx/run", response_model=QAResponse)
+def run_qa_get(payload: QARequest, token: str = Depends(validate_token)):
+    ext=get_file_extension_fron_url(payload.documents)
+    temp_file = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+    response = requests.get(payload.documents)
+    temp_file.write(response.content)
+    temp_file.close()
+
+    download_file_and_chunk(temp_file.name)
 
     answers = []
     for question in payload.questions:
